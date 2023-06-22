@@ -58,6 +58,10 @@ app.use(function (req, res, next) {
     next();
 });
 
+app.get('/', (req, res)=>{
+    res.send("Express on Vercel!");
+});
+
 app.get('/records', async (req, res, next)=>{
     try {
         const query = {};
