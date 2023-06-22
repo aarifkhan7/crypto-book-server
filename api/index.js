@@ -207,3 +207,5 @@ app.listen(port, async () => {
         console.log("Could not connect to MongoDB!");
     }
 });
+
+module.exports = app;
