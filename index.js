@@ -59,7 +59,7 @@ app.use(function (req, res, next) {
 });
 
 app.get('/', (req, res)=>{
-    res.send("Express on Vercel!");
+    res.send("Express on Render!");
 });
 
 app.get('/records', async (req, res, next)=>{
