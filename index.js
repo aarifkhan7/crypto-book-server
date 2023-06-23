@@ -8,28 +8,29 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var app = express();
 
 // port settings
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 3100
 // following line is for mongodb atlas
-const uri = "mongodb+srv://aarifkhan_7:admin@cluster0.zwgc9a4.mongodb.net/?retryWrites=true&w=majority";
+// const uri = "mongodb+srv://aarifkhan_7:admin@cluster0.zwgc9a4.mongodb.net/?retryWrites=true&w=majority";
 // terminal command to connect to mongodb atlas server
 // mongosh "mongodb+srv://cluster0.zwgc9a4.mongodb.net/" --apiVersion 1 --username aarifkhan_7
 // following line is for local install
-// const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.9.1";
+const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.9.1";
 
 // following line is for mongodb atlas
-const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
+// const client = new MongoClient(uri, {
+//     serverApi: {
+//         version: ServerApiVersion.v1,
+//         strict: true,
+//         deprecationErrors: true,
+//     }
+// });
 
 // following line is for local install
-// const client = new MongoClient(uri);
+const client = new MongoClient(uri);
 
 let database = null;
 let records = null;
+let users = null;
 
 app.use(morgan('dev'));
 app.use(bodyParser.json());
@@ -48,8 +49,6 @@ app.use(session({
     })
 }));
 
-// auth check
-
 app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -57,6 +56,54 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     next();
 });
+
+// auth check
+
+app.get('/auth', (req, res)=>{
+    if(req.session.username === undefined){
+        res.json({msg: false});
+    }else{
+        res.json({msg: true});
+    }
+})
+
+app.post('/auth', async (req, res)=>{
+    let requsername = req.body.uname;
+    let reqpassword = req.body.password;
+    if(!requsername || !reqpassword){
+        res.sendStatus(401);
+    }else{
+        try {
+            let query = {
+                username: requsername,
+                password: reqpassword
+            };
+            let cursor = await users.find(query);
+            let cursorarr = await cursor.toArray();
+            if(cursorarr.length > 0){
+                req.session.username = requsername;
+                res.sendStatus(200);
+            }else{
+                res.sendStatus(401);
+            }
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+    }
+});
+
+app.delete('/auth', (req, res)=>{
+    req.session.username = undefined;
+    res.sendStatus(200);
+});
+
+app.use((req, res, next)=>{
+    if(req.session.username == undefined){
+        res.sendStatus(401);
+    }
+    next();
+})
 
 app.get('/', (req, res)=>{
     res.send("Express on Render!");
@@ -206,7 +253,8 @@ app.listen(port, async () => {
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged deployment. Successfully connected to MongoDB!");
         database = client.db("my-app");
-        records = database.collection("records");;
+        records = database.collection("records");
+        users = database.collection("users");
     } catch(err) {
         console.log("Could not connect to MongoDB!");
     }
