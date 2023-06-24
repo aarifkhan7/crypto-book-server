@@ -66,8 +66,8 @@ app.use(session({
     saveUninitialized: true,
     cookie:{
         maxAge: 1000*60*60*24*30,
-        secure: true,
-        sameSite: 'none',
+        secure: false,
+        sameSite: false,
         domain: '.onrender.com'
     },
     store: MongoStore.create({
