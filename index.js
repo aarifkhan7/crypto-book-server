@@ -38,6 +38,22 @@ app.use(bodyParser.json());
 app.use(cors({credentials: true, origin: true}));
 
 
+// database function to check whether user exists by username
+async function userExists(requsername){
+    try {
+        const query = {
+            username: requsername
+        };
+        let cursor = await users.find(query);
+        let cursorarr = await cursor.toArray();
+        return cursorarr.length > 0;
+    } catch (error) {
+        console.log(error);
+        console.log("Could not check if a user exists.");
+        return false;
+    }
+}
+
 app.options((req, res)=>{
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.send();
@@ -74,7 +90,21 @@ app.use(session({
 //     next();
 // });
 
+// auth routes
+// check loggedin endpoint
+app.get('/auth', async (req, res, next)=>{
+    if(req.session.username === undefined){
+        res.json({msg: false});
+    }else{
+        if(await userExists(req.session.username)){
+            res.json({msg: true});
+        }else{
+            res.json({msg: false});
+        }
+    }
+})
 
+// login endpoint
 app.post('/auth', async (req, res)=>{
     let requsername = req.body.username;
     let reqpassword = req.body.password;
@@ -101,31 +131,32 @@ app.post('/auth', async (req, res)=>{
     }
 });
 
+// signup endpoint
 app.put('/auth', async (req, res)=>{
     let reqfirstname = req.body.firstname;
     let reqlastname = req.body.lastname;
     let requsername = req.body.username;
     let reqpassword = req.body.password;
     if(!reqfirstname || !reqlastname || !requsername || !reqpassword){
-        console.log(reqfirstname);
-        console.log(reqlastname);
-        console.log(requsername);
-        console.log(reqpassword);
-        
         res.sendStatus(401);
     }else{
         try {
-            let query = {
-                firstName: reqfirstname,
-                lastName: reqlastname,
-                username: requsername,
-                password: reqpassword
-            };
-            let cursor = await users.insertOne(query);
-            if(cursor.acknowledged === true){
-                res.sendStatus(200);
-            }else{
+            let userAlreadyExists = await userExists(requsername);
+            if(userAlreadyExists === true){
                 res.sendStatus(400);
+            }else{
+                let query = {
+                    firstName: reqfirstname,
+                    lastName: reqlastname,
+                    username: requsername,
+                    password: reqpassword
+                };
+                let cursor = await users.insertOne(query);
+                if(cursor.acknowledged === true){
+                    res.sendStatus(200);
+                }else{
+                    res.sendStatus(400);
+                }
             }
         } catch (error) {
             console.log(error);
@@ -136,25 +167,22 @@ app.put('/auth', async (req, res)=>{
     
 })
 
-// auth check
-app.get('/auth', (req, res, next)=>{
-    if(req.session.username === undefined){
-        res.json({msg: false});
-    }else{
-        res.json({msg: true});
-    }
-})
-
+// logout endpoint
 app.delete('/auth', (req, res)=>{
     req.session.username = undefined;
     res.sendStatus(200);
 });
 
-app.use((req, res, next)=>{
+// auth check
+app.use(async (req, res, next)=>{
     if(req.session.username == undefined){
         res.sendStatus(401);
     }else{
-        next();
+        if(await userExists(req.session.username)){
+            next();
+        }else{
+            res.sendStatus(401);
+        }
     }
 })
 
