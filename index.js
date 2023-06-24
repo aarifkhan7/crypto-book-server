@@ -68,7 +68,7 @@ app.use(session({
         maxAge: 1000*60*60*24*30,
         secure: false,
         sameSite: 'none',
-        domain: 'crypto-book-frontend.onrender.com'
+        domain: '.onrender.com'
     },
     store: MongoStore.create({
         client,
