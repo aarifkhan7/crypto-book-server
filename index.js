@@ -2,6 +2,7 @@ var express = require("express");
 var bodyParser = require('body-parser');
 var session = require('express-session');
 var morgan = require('morgan');
+var cors = require('cors');
 const path = require('path');
 const MongoStore = require('connect-mongo');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -34,6 +35,13 @@ let users = null;
 
 app.use(morgan('dev'));
 app.use(bodyParser.json());
+app.use(cors({credentials: true, origin: true}));
+
+
+app.options((req, res)=>{
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.send();
+});
 
 // sessions
 app.use(session({
@@ -41,7 +49,10 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie:{
-        maxAge: 60 * 60 * 24
+        maxAge: 1000*60*60*24*30,
+        secure: false,
+        sameSite: 'none',
+        domain: 'localhost'
     },
     store: MongoStore.create({
         client,
@@ -49,17 +60,23 @@ app.use(session({
     })
 }));
 
-app.use(function (req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    next();
-});
+// app.use((req, res, next)=>{
+//     console.log(req.session.id);
+//     console.log(req.session.username);
+//     next();
+// })
+
+// app.use(function (req, res, next) {
+//     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+//     res.setHeader('Access-Control-Allow-Methods', 'Allow');
+//     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+//     res.setHeader('Access-Control-Allow-Credentials', true);
+//     next();
+// });
 
 // auth check
 
-app.get('/auth', (req, res)=>{
+app.get('/auth', (req, res, next)=>{
     if(req.session.username === undefined){
         res.json({msg: false});
     }else{
@@ -68,13 +85,17 @@ app.get('/auth', (req, res)=>{
 })
 
 app.post('/auth', async (req, res)=>{
-    let requsername = req.body.uname;
+    let reqfirstname = req.body.firstname;
+    let reqlastname = req.body.lastname;
+    let requsername = req.body.username;
     let reqpassword = req.body.password;
     if(!requsername || !reqpassword){
         res.sendStatus(401);
     }else{
         try {
             let query = {
+                firstName: reqfirstname,
+                lastName: reqlastname,
                 username: requsername,
                 password: reqpassword
             };
@@ -101,8 +122,9 @@ app.delete('/auth', (req, res)=>{
 app.use((req, res, next)=>{
     if(req.session.username == undefined){
         res.sendStatus(401);
+    }else{
+        next();
     }
-    next();
 })
 
 app.get('/', (req, res)=>{
@@ -113,7 +135,8 @@ app.get('/records', async (req, res, next)=>{
     try {
         const query = {};
         const cursor = records.find(query);
-        res.json(await cursor.toArray());
+        const data = await cursor.toArray();
+        res.json(data);
     } catch (error) {
         console.log('Read failed!');
         res.sendStatus(500);
