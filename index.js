@@ -181,6 +181,7 @@ app.use(async (req, res, next)=>{
         if(await userExists(req.session.username)){
             next();
         }else{
+            req.session.username = undefined;
             res.sendStatus(401);
         }
     }
