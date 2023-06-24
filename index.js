@@ -74,19 +74,8 @@ app.use(session({
 //     next();
 // });
 
-// auth check
-
-app.get('/auth', (req, res, next)=>{
-    if(req.session.username === undefined){
-        res.json({msg: false});
-    }else{
-        res.json({msg: true});
-    }
-})
 
 app.post('/auth', async (req, res)=>{
-    let reqfirstname = req.body.firstname;
-    let reqlastname = req.body.lastname;
     let requsername = req.body.username;
     let reqpassword = req.body.password;
     if(!requsername || !reqpassword){
@@ -94,8 +83,6 @@ app.post('/auth', async (req, res)=>{
     }else{
         try {
             let query = {
-                firstName: reqfirstname,
-                lastName: reqlastname,
                 username: requsername,
                 password: reqpassword
             };
@@ -113,6 +100,50 @@ app.post('/auth', async (req, res)=>{
         }
     }
 });
+
+app.put('/auth', async (req, res)=>{
+    let reqfirstname = req.body.firstname;
+    let reqlastname = req.body.lastname;
+    let requsername = req.body.username;
+    let reqpassword = req.body.password;
+    if(!reqfirstname || !reqlastname || !requsername || !reqpassword){
+        console.log(reqfirstname);
+        console.log(reqlastname);
+        console.log(requsername);
+        console.log(reqpassword);
+        
+        res.sendStatus(401);
+    }else{
+        try {
+            let query = {
+                firstName: reqfirstname,
+                lastName: reqlastname,
+                username: requsername,
+                password: reqpassword
+            };
+            let cursor = await users.insertOne(query);
+            if(cursor.acknowledged === true){
+                res.sendStatus(200);
+            }else{
+                res.sendStatus(400);
+            }
+        } catch (error) {
+            console.log(error);
+            res.sendStatus(500);
+        }
+        
+    }
+    
+})
+
+// auth check
+app.get('/auth', (req, res, next)=>{
+    if(req.session.username === undefined){
+        res.json({msg: false});
+    }else{
+        res.json({msg: true});
+    }
+})
 
 app.delete('/auth', (req, res)=>{
     req.session.username = undefined;
