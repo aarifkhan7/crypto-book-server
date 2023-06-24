@@ -11,23 +11,23 @@ var app = express();
 // port settings
 const port = process.env.PORT || 3100
 // following line is for mongodb atlas
-// const uri = "mongodb+srv://aarifkhan_7:admin@cluster0.zwgc9a4.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://aarifkhan_7:admin@cluster0.zwgc9a4.mongodb.net/?retryWrites=true&w=majority";
 // terminal command to connect to mongodb atlas server
 // mongosh "mongodb+srv://cluster0.zwgc9a4.mongodb.net/" --apiVersion 1 --username aarifkhan_7
 // following line is for local install
-const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.9.1";
+// const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.9.1";
 
 // following line is for mongodb atlas
-// const client = new MongoClient(uri, {
-//     serverApi: {
-//         version: ServerApiVersion.v1,
-//         strict: true,
-//         deprecationErrors: true,
-//     }
-// });
+const client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
 
 // following line is for local install
-const client = new MongoClient(uri);
+// const client = new MongoClient(uri);
 
 let database = null;
 let records = null;
