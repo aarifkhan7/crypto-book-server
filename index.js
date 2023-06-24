@@ -7,6 +7,7 @@ const path = require('path');
 const MongoStore = require('connect-mongo');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var app = express();
+app.set('trust proxy', 10);
 
 // port settings
 const port = process.env.PORT || 3100
@@ -66,9 +67,9 @@ app.use(session({
     saveUninitialized: true,
     cookie:{
         maxAge: 1000*60*60*24*30,
-        secure: false,
-        sameSite: false,
-        domain: '.onrender.com'
+        secure: true,
+        sameSite: 'none',
+        domain: 'onrender.com'
     },
     store: MongoStore.create({
         client,
