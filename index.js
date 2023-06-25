@@ -12,11 +12,11 @@ var app = express();
 app.set('trust proxy', 10);
 
 
-const token_secret = process.env.TOKEN_SECRET;
+const token_secret = "aarifkhannodejsreact";
 // port settings
 const port = process.env.PORT || 3100;
 // following line is for mongodb atlas
-const uri = process.env.DB_URI;
+const uri = "mongodb+srv://aarifkhan_7:admin@cluster0.zwgc9a4.mongodb.net/?retryWrites=true&w=majority";
 // terminal command to connect to mongodb atlas server
 // mongosh "mongodb+srv://cluster0.zwgc9a4.mongodb.net/" --apiVersion 1 --username aarifkhan_7
 // following line is for local install
