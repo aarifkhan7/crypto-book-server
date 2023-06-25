@@ -3,20 +3,25 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var morgan = require('morgan');
 var cors = require('cors');
+var jwt = require('jsonwebtoken');
 const path = require('path');
 const MongoStore = require('connect-mongo');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config();
 var app = express();
 app.set('trust proxy', 10);
 
+
+const token_secret = process.env.TOKEN_SECRET;
 // port settings
-const port = process.env.PORT || 3100
+const port = process.env.PORT || 3100;
 // following line is for mongodb atlas
-const uri = "mongodb+srv://aarifkhan_7:admin@cluster0.zwgc9a4.mongodb.net/?retryWrites=true&w=majority";
+const uri = process.env.DB_URI;
 // terminal command to connect to mongodb atlas server
 // mongosh "mongodb+srv://cluster0.zwgc9a4.mongodb.net/" --apiVersion 1 --username aarifkhan_7
 // following line is for local install
 // const uri = "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.9.1";
+
 
 // following line is for mongodb atlas
 const client = new MongoClient(uri, {
@@ -60,48 +65,19 @@ app.options((req, res)=>{
     res.send();
 });
 
-// sessions
-app.use(session({
-    secret: 'aarif khan',
-    resave: false,
-    saveUninitialized: true,
-    cookie:{
-        maxAge: 1000*60*60*24*30,
-        secure: true,
-        sameSite: 'none',
-        domain: 'crypto-book-frontend.onrender.com'
-    },
-    store: MongoStore.create({
-        client,
-        dbName: 'my-app'
-    })
-}));
-
-// app.use((req, res, next)=>{
-//     console.log(req.session.id);
-//     console.log(req.session.username);
-//     next();
-// })
-
-// app.use(function (req, res, next) {
-//     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-//     res.setHeader('Access-Control-Allow-Methods', 'Allow');
-//     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-//     res.setHeader('Access-Control-Allow-Credentials', true);
-//     next();
-// });
-
 // auth routes
 // check loggedin endpoint
 app.get('/auth', async (req, res, next)=>{
-    if(req.session.username === undefined){
+    const token = req.body.token || req.query.token || req.headers["x-access-token"];
+    if (!token) {
+        return res.status(403).send("A token is required for authentication");
+    }
+    try{
+        const decoded = jwt.verify(token, token_secret);
+        req.user = decoded;
+        res.json({msg: true});
+    }catch(err){
         res.json({msg: false});
-    }else{
-        if(await userExists(req.session.username)){
-            res.json({msg: true});
-        }else{
-            res.json({msg: false});
-        }
     }
 })
 
@@ -110,7 +86,7 @@ app.post('/auth', async (req, res)=>{
     let requsername = req.body.username;
     let reqpassword = req.body.password;
     if(!requsername || !reqpassword){
-        res.sendStatus(401);
+        res.sendStatus(400);
     }else{
         try {
             let query = {
@@ -120,8 +96,8 @@ app.post('/auth', async (req, res)=>{
             let cursor = await users.find(query);
             let cursorarr = await cursor.toArray();
             if(cursorarr.length > 0){
-                req.session.username = requsername;
-                res.sendStatus(200);
+                let token = jwt.sign({username: requsername}, token_secret, {expiresIn: "7d"});
+                res.json({token: token});
             }else{
                 res.sendStatus(401);
             }
@@ -170,21 +146,21 @@ app.put('/auth', async (req, res)=>{
 
 // logout endpoint
 app.delete('/auth', (req, res)=>{
-    req.session.username = undefined;
     res.sendStatus(200);
 });
 
-// auth check
+// auth check by validating token
 app.use(async (req, res, next)=>{
-    if(req.session.username == undefined){
-        res.sendStatus(401);
-    }else{
-        if(await userExists(req.session.username)){
-            next();
-        }else{
-            req.session.username = undefined;
-            res.sendStatus(401);
-        }
+    const token = req.body.token || req.query.token || req.headers["x-access-token"];
+    if (!token) {
+        res.sendStatus(403);
+    }
+    try{
+        const decoded = jwt.verify(token, token_secret);
+        req.user = decoded;
+        next();
+    }catch(err){
+        res.sendStatus(403);
     }
 })
 
