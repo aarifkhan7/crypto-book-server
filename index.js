@@ -74,7 +74,6 @@ app.get('/auth', async (req, res, next)=>{
     }
     try{
         const decoded = jwt.verify(token, token_secret);
-        req.user = decoded;
         res.json({msg: true});
     }catch(err){
         res.json({msg: false});
@@ -157,7 +156,7 @@ app.use(async (req, res, next)=>{
     }
     try{
         const decoded = jwt.verify(token, token_secret);
-        req.user = decoded;
+        req.token = decoded;
         next();
     }catch(err){
         res.sendStatus(403);
