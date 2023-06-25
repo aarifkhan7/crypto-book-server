@@ -148,13 +148,15 @@ app.use(async (req, res, next)=>{
     const token = req.body.token || req.query.token || req.headers["x-access-token"];
     if (!token) {
         res.sendStatus(403);
-    }
-    try{
-        const decoded = jwt.verify(token, token_secret);
-        req.token = decoded;
-        next();
-    }catch(err){
-        res.sendStatus(403);
+        
+    }else{
+        try{
+            const decoded = jwt.verify(token, token_secret);
+            req.token = decoded;
+            next();
+        }catch(err){
+            res.sendStatus(403);
+        }
     }
 })
 
