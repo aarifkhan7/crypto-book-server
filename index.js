@@ -60,11 +60,6 @@ async function userExists(requsername){
     }
 }
 
-app.options((req, res)=>{
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.send();
-});
-
 // auth routes
 // check loggedin endpoint
 app.get('/auth', async (req, res, next)=>{
