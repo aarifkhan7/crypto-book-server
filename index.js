@@ -9,7 +9,7 @@ const MongoStore = require('connect-mongo');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 var app = express();
-app.set('trust proxy', 10);
+// app.set('trust proxy', 10);
 
 
 const token_secret = "aarifkhannodejsreact";
