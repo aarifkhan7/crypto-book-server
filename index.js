@@ -71,7 +71,7 @@ app.get('/auth', async (req, res, next)=>{
         const decoded = jwt.verify(token, token_secret);
         res.json({msg: true});
     }catch(err){
-        res.json({msg: false});
+        res.sendStatus(403);
     }
 })
 
@@ -148,7 +148,6 @@ app.use(async (req, res, next)=>{
     const token = req.body.token || req.query.token || req.headers["x-access-token"];
     if (!token) {
         res.sendStatus(403);
-        
     }else{
         try{
             const decoded = jwt.verify(token, token_secret);
@@ -166,7 +165,9 @@ app.get('/', (req, res)=>{
 
 app.get('/records', async (req, res, next)=>{
     try {
-        const query = {};
+        const query = {
+            username: req.token.username
+        };
         const cursor = records.find(query);
         const data = await cursor.toArray();
         res.json(data);
@@ -179,7 +180,9 @@ app.get('/records', async (req, res, next)=>{
 app.get('/records/all/:query', async (req, res, next)=>{
     try {
         const q = req.params.query;
-        const query = {$or: [
+        const query = {
+            username: req.token.username,
+            $or: [
             {name: {$regex: q, $options: "xi"}},
             {address: {$regex: q, $options: "xi"}},
             {coinName: {$regex: q, $options: "xi"}}
@@ -195,7 +198,10 @@ app.get('/records/all/:query', async (req, res, next)=>{
 app.get('/records/name/:query', async (req, res, next)=>{
     try {
         const q = req.params.query;
-        const query = {name: {$regex: q, $options: "xi"}};
+        const query = {
+            username: req.token.username,
+            name: {$regex: q, $options: "xi"}
+        };
         const cursor = records.find(query);
         res.json(await cursor.toArray());   
     } catch (error) {
@@ -207,7 +213,10 @@ app.get('/records/name/:query', async (req, res, next)=>{
 app.get('/records/address/:query', async (req, res, next)=>{
     try {
         const q = req.params.query;
-        const query = {address: {$regex: q, $options: "xi"}};
+        const query = {
+            username: req.token.username,
+            address: {$regex: q, $options: "xi"}
+        };
         const cursor = records.find(query);
         res.json(await cursor.toArray());   
     } catch (error) {
@@ -219,7 +228,10 @@ app.get('/records/address/:query', async (req, res, next)=>{
 app.get('/records/coin/:query', async (req, res, next)=>{
     try {
         const q = req.params.query;
-        const query = {coinName: {$regex: q, $options: "xi"}};
+        const query = {
+            username: req.token.username,
+            coinName: {$regex: q, $options: "xi"}
+        };
         const cursor = records.find(query);
         res.json(await cursor.toArray());   
     } catch (error) {
@@ -237,6 +249,7 @@ app.post('/records', async (req, res, next)=>{
     }else{
         try {
             let dbRecord = {
+                username: req.token.username,
                 name: reqname,
                 address: reqaddress,
                 coinName: reqcoinName
@@ -259,6 +272,7 @@ app.delete('/records', async (req, res, next)=>{
     }else{
         try {
             let query = {
+                username: req.token.username,
                 _id: new ObjectId(reqid)
             };
             var done = await records.deleteOne(query);
@@ -282,6 +296,7 @@ app.put('/records', async (req, res, next)=>{
     }else{
         try {
             let query = {
+                username: req.token.username,
                 _id: new ObjectId(reqid)
             };
             let newobj = {
